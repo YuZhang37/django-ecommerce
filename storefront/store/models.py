@@ -54,6 +54,13 @@ class Customer(models.Model):
         default=BRONZE
     )
 
+    class Meta:
+        indexes = [
+            models.Index(fields=('last_name', 'first_name')),
+            models.Index(fields=('email',)),
+            models.Index(fields=('phone_number',))
+        ]
+
 
 class Order(models.Model):
     PAYMENT_PENDING = 'P'
@@ -101,5 +108,4 @@ class Address(models.Model):
     #     Customer,
     #     on_delete=models.CASCADE()
     # )
-    customer = models.ForeignKey( Customer, on_delete=models.CASCADE)
-
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
