@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'debug_toolbar',
 
     'playground',
+    'store',
+    'tags',
+    'likes',
 ]
 
 MIDDLEWARE = [
@@ -72,16 +75,11 @@ TEMPLATES = [
 
 ALLOWED_HOSTS = ['127.0.0.1', '192.168.56.11', 'localhost', '0.0.0.0']
 
-INTERNAL_IPS = [
-    # ...
-    "localhost",
-    "10.0.2.15",
-    '127.0.0.1',
-    '192.168.56.11',
-    'localhost',
-    '0.0.0.0'
-    # ...
-]
+# INTERNAL_IPS = [
+#     # ...
+#     "10.0.2.2",
+#     # ...
+# ]
 
 WSGI_APPLICATION = 'storefront.wsgi.application'
 
@@ -89,12 +87,24 @@ WSGI_APPLICATION = 'storefront.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'storefront',
+        'HOST': '0.0.0.0',
+        'PORT': '3306',
+        'USER': 'root',
+        'PASSWORD': 'yourpassword',
     }
 }
+
 
 
 # Password validation
