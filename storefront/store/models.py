@@ -78,7 +78,11 @@ class Order(models.Model):
         default=PAYMENT_PENDING,
     )
 
-    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.PROTECT,
+        related_name='orders',
+    )
 
 
 class OrderItem(models.Model):
