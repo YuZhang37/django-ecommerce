@@ -221,6 +221,7 @@ def say_hello(request):
 
     # query_set = Customer.objects.annotate(
     #     # should be order_set, but somehow this function implements with just order
+    #     # group by and count
     #     orders_count=Count('order')
     # )
 
@@ -349,15 +350,18 @@ def say_hello2(request):
         # with name and parameters
         # cursor.callproc('get_customers', ['1', 2, 'a'])
 
+    query_set = Customer.objects.all()[:5]
+
     return render(
         request,
         'hello.html',
         {
             'name': 'Marvin',
-            # 'customers': list(query_set),
+            'customers': list(query_set),
             # 'orders': list(query_set)
             # 'result': result,
             # 'tags': list(query_set),
             # 'query_set': list(query_set)
+
         }
     )

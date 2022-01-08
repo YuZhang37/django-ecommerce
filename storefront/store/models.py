@@ -1,8 +1,9 @@
 from django.db import models
-
+from django.core.validators import MinValueValidator
 
 # django automatically creates an id as the primary key, if the primary key is
 # not specified.
+
 
 class Collection(models.Model):
     title = models.CharField(max_length=255)
@@ -13,6 +14,14 @@ class Collection(models.Model):
         # tell django not to create the reverse relationship
         related_query_name='featured_collection',
     )
+
+    # type annotation
+    def __str__(self) -> str:
+        # return super().__str__()
+        return self.title + ', ' + str(self.featured_product_id)
+
+    class Meta:
+        ordering = ['title']
 
 
 class Promotion(models.Model):
@@ -25,13 +34,27 @@ class Promotion(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, null=True)
-    description = models.TextField()
-    inventory = models.IntegerField()
-    unit_price = models.DecimalField(max_digits=6, decimal_places=2)
+    # null=True, only applies to the database
+    # to make it optional in the admin interface: blank=True
+    description = models.TextField(null=True, blank=True)
+    inventory = models.IntegerField(
+        validators=[MinValueValidator(1)],
+    )
+    unit_price = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(1)],
+    )
     last_updated_at = models.DateTimeField(auto_now=True)
 
     collection = models.ForeignKey(Collection, on_delete=models.PROTECT)
     promotions = models.ManyToManyField(Promotion)
+
+    def __str__(self) -> str:
+        return self.name + ', ' + str(self.inventory)
+
+    class Meta:
+        ordering = ['name']
 
 
 class Customer(models.Model):
@@ -43,6 +66,9 @@ class Customer(models.Model):
         (SILVER, 'silver'),
         (GOLD, 'gold'),
     ]
+    # each tuple:
+    # first element- actual value stored in database
+    # second element: human readable notes, which is also used in admin
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -60,6 +86,10 @@ class Customer(models.Model):
             models.Index(fields=('email',)),
             models.Index(fields=('phone_number',))
         ]
+        ordering = ('first_name', 'last_name')
+
+    def __str__(self) -> str:
+        return f'{self.last_name} {self.first_name}'
 
 
 class Order(models.Model):
