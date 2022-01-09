@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'debug_toolbar',
+    'rest_framework',
 
     'playground',
     'store',
@@ -148,3 +149,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+REST_FRAMEWORK = {
+    # stop the DRF from converting decimal to string when serializing objects
+    'COERCE_DECIMAL_TO_STRING': False,
+}

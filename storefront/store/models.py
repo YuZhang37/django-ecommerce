@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.core.validators import MinValueValidator
 
@@ -48,7 +50,12 @@ class Product(models.Model):
     last_updated_at = models.DateTimeField(auto_now=True)
 
     collection = models.ForeignKey(Collection, on_delete=models.PROTECT)
+    # ManyToManyField
+    # optional when creating a record, it would be an empty list if it's not set
     promotions = models.ManyToManyField(Promotion)
+
+    def get_price_with_tax2(self):
+        return self.unit_price * Decimal(1.2)
 
     def __str__(self) -> str:
         return self.name + ', ' + str(self.inventory)
