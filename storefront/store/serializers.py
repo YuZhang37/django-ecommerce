@@ -1,12 +1,12 @@
 from decimal import Decimal
 
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from store.models import Product, Collection
+from store.models import Product, Collection, Review
 
 
 class CollectionSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Collection
         # id: automatically read-only
@@ -14,10 +14,9 @@ class CollectionSerializer(serializers.ModelSerializer):
         read_only_fields = []
         extra_kwargs = {'featured_product': {'required': False}}
 
+    # read_only=True, this field is not for creating and updating
     product_count = serializers.IntegerField(read_only=True)
     # product_count = serializers.IntegerField(required=False)
-
-
 
 
 # {
@@ -47,6 +46,7 @@ class ProductSerializerForCreate(serializers.ModelSerializer):
         # title = serializers.CharField(
         #     max_length=255, source='name',
         # )
+
     # the default validation rules come from the definition of model fields
     # we need validation at the object level, such as comparing fields.
     # override the validate method in the ModelSerializer
@@ -93,7 +93,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     title = serializers.CharField(max_length=255, source='name')
     price = serializers.DecimalField(
-         max_digits=6, decimal_places=2, source='unit_price'
+        max_digits=6, decimal_places=2, source='unit_price'
     )
     price_with_tax = serializers.SerializerMethodField(
         method_name='calculate_tax',
@@ -109,13 +109,12 @@ class ProductSerializer(serializers.ModelSerializer):
         # parameters for generating urls
         # or lookup_field and lookup_url_kwarg default to pk
         view_name='collection-detail',
-        lookup_field='id',
-        lookup_url_kwarg='obj_id',
+        # lookup_field='id',
+        # lookup_url_kwarg='obj_id',
     )
 
     def calculate_tax(self, product: Product):
         return product.unit_price * Decimal(1.1)
-
 
 
 class CollectionSerializer0(serializers.Serializer):
@@ -168,9 +167,24 @@ class ProductSerializer0(serializers.Serializer):
         queryset=Collection.objects.all(),
         # parameters for generating urls
         view_name='collection-detail',
-        lookup_field='id',
-        lookup_url_kwarg='obj_id',
+        # lookup_field='id',
+        # lookup_url_kwarg='obj_id',
     )
 
     def calculate_tax(self, product: Product):
         return product.unit_price * Decimal(1.1)
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id', 'product', 'name', 'description', 'date']
+        read_only_fields = ['product', ]
+        # extra_kwargs = {'featured_product': {'required': False}}
+
+    def create(self, validated_data):
+        product_id = self.context['product_id']
+        # return Review.objects.create(product_id=product_id, **validated_data)
+        product = get_object_or_404(Product, id=product_id)
+        return Review.objects.create(product=product, **validated_data)
+

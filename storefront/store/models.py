@@ -150,3 +150,12 @@ class Address(models.Model):
     #     on_delete=models.CASCADE()
     # )
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    # textfield has no limitation on the text
+    description = models.TextField()
+    date = models.DateField(auto_now_add=True)
+
