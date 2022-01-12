@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from store.models import Product, Collection, Review
+from store.models import Product, Collection, Review, Cart, CartItem
 
 
 class CollectionSerializer(serializers.ModelSerializer):
@@ -117,6 +117,15 @@ class ProductSerializer(serializers.ModelSerializer):
         return product.unit_price * Decimal(1.1)
 
 
+class ProductSerializerForItem(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id',
+                  'name',
+                  'unit_price',
+                  ]
+
+
 class CollectionSerializer0(serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField(max_length=255)
@@ -188,3 +197,92 @@ class ReviewSerializer(serializers.ModelSerializer):
         product = get_object_or_404(Product, id=product_id)
         return Review.objects.create(product=product, **validated_data)
 
+
+class CartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'quantity', 'total_price']
+
+    product = ProductSerializerForItem()
+    total_price = serializers.SerializerMethodField(
+        method_name='calculate_total_price'
+    )
+
+    def calculate_total_price(self, item: CartItem):
+        return item.product.unit_price * item.quantity
+
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True, source='cartitem_set')
+    id = serializers.UUIDField(read_only=True)
+    total_price = serializers.SerializerMethodField()
+
+    def get_total_price(self, cart: Cart):
+        prices = [
+            item.quantity * item.product.unit_price
+            for item in cart.cartitem_set.all()
+        ]
+        return sum(prices)
+
+    class Meta:
+        model = Cart
+        fields = ['id',
+                  'created_at',
+                  'items',
+                  'total_price',
+                  ]
+        # read_only_fields = ['id']
+
+    # def calculate_total_price(self, cart: Cart):
+    #     price = cart.cartitem_set.aggregate(Sum())
+    #     return item.product.unit_price * Decimal(item.quantity)
+
+
+class CartItemSerializerForCreate(serializers.ModelSerializer):
+    # product_id = serializers.IntegerField()
+    # class Meta:
+    #     model = CartItem
+    #     fields = ['id', 'quantity', 'product_id']
+
+    # def validate_product_id(self, value):
+    #     raise the Validation Error or return the validated value
+    #     if not Product.objects.filter(pk=value).exists():
+    #         raise serializers.ValidationError(
+    #             "No product with the given id was found."
+    #         )
+    #     return value
+    #
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'quantity', ]
+
+    def save(self, **kwargs):
+        cart_id = self.context['cart_id']
+        product = self.validated_data['product']
+        # primary key related field returns an object
+        quantity = self.validated_data['quantity']
+
+        try:
+            cart_item = CartItem.objects.get(cart=cart_id, product=product)
+            cart_item.quantity += quantity
+            cart_item.save()
+            # https://docs.djangoproject.com/en/4.0/ref/models/instances/#django.db.models.Model.save
+            self.instance = cart_item
+        except CartItem.DoesNotExist:
+            instance = CartItem.objects.create(
+                # cart_id=cart_id, product=product, quantity=quantity
+                cart_id=cart_id, **self.validated_data
+            )
+            # get or filter doesn't distinguish between object and object_pk
+            # create does
+            self.instance = instance
+        # returning the result here gets the right result on the browsable api
+        return self.instance
+
+
+class CartItemSerializerForUpdate(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ['quantity']
+        # fields = ['id', 'product', 'quantity']
+        # read_only_fields = ['id', 'product']

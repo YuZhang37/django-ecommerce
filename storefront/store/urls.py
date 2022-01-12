@@ -13,6 +13,7 @@ router = routers.DefaultRouter()
 # register parent routers
 router.register('collections', views.CollectionViewSet)
 router.register('products', views.ProductViewSet, basename='product')
+router.register('carts', views.CartViewSet, basename='cart')
 
 # register the child routers
 # lookup='product' means /products/product_pk/
@@ -24,10 +25,21 @@ products_router.register(
     'reviews', views.ReviewViewSet,
     basename='product-review'
 )
+
+carts_router = routers.NestedDefaultRouter(
+    router, 'carts', lookup='cart',
+)
+carts_router.register(
+    'items', views.CartItemViewSet,
+    basename='cart-item'
+)
+
+
 # urlpatterns = router.urls + products_router.urls
 urlpatterns = [
     path('', include(router.urls)),
     path('', include(products_router.urls)),
+    path('', include(carts_router.urls)),
 ]
 
 # print(repr(serializers.ReviewSerializer()))
@@ -37,6 +49,8 @@ urlpatterns = [
 # pprint(products_router.urls)
 # print()
 # pprint(urlpatterns)
+# print(repr(serializers.CartSerializer()))
+# print(repr(serializers.CartItemSerializerForCreate()))
 
 # router = DefaultRouter()
 # # support Root api

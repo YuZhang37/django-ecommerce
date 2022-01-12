@@ -14,24 +14,25 @@ from rest_framework.pagination import PageNumberPagination, LimitOffsetPaginatio
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from store.filters import ProductFilter
-from store.models import Product, Collection, OrderItem, Review
+from store.models import Product, Collection, OrderItem, Review, Cart, CartItem
 from store.paginations import ProductPageNumberPagination
 from store.serializers import (
     ProductSerializer,
     CollectionSerializer,
     ProductSerializerForCreate,
-    ReviewSerializer
+    ReviewSerializer, CartSerializer, CartItemSerializer, CartItemSerializerForCreate, CartItemSerializerForUpdate
 )
 
-from rest_framework.mixins import ListModelMixin, CreateModelMixin
+from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, \
+    UpdateModelMixin
 from django_filters.rest_framework import DjangoFilterBackend
+
+
 # this backend gives generic filtering
 # gt or lt need the custom filter class
-
-
 
 
 # get the browsable API,
@@ -362,6 +363,7 @@ class CollectionViewSet(ModelViewSet):
         product_count=Count('product')
     ).all()
     serializer_class = CollectionSerializer
+
     # lookup_field = 'id'
     # lookup_url_kwarg = 'obj_id'
 
@@ -451,8 +453,8 @@ class ProductViewSet(ModelViewSet):
 
 
 class ReviewViewSet(ModelViewSet):
-
     serializer_class = ReviewSerializer
+
     # we use context object to provide additional data to the serializer
 
     # self.kwa
@@ -469,3 +471,44 @@ class ReviewViewSet(ModelViewSet):
         # if Product.objects.filter(id=self.kwargs['product_pk']).exists():
         return super().list(request, *args, **kwargs)
 
+
+class CartViewSet(CreateModelMixin,
+                  RetrieveModelMixin,
+                  DestroyModelMixin,
+                  ListModelMixin,
+                  GenericViewSet):
+    serializer_class = CartSerializer
+
+    def get_queryset(self):
+        if self.request.method == 'GET':
+            return Cart.objects.all().prefetch_related('cartitem_set__product')
+        return Cart.objects.all()
+
+
+class CartItemViewSet(ListModelMixin,
+                      RetrieveModelMixin,
+                      CreateModelMixin,
+                      UpdateModelMixin,
+                      DestroyModelMixin,
+                      GenericViewSet):
+    # not allowing put method for this endpoint
+    # the method names here have to be lower cases
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CartItemSerializerForCreate
+        elif self.request.method == 'PATCH':
+            return CartItemSerializerForUpdate
+        return CartItemSerializer
+
+    def get_queryset(self):
+        items = CartItem.objects.filter(
+            cart=self.kwargs['cart_pk']
+        ).all().select_related('product')
+        return items
+
+    def get_serializer_context(self):
+        if self.request.method == 'POST':
+            return {'cart_id': self.kwargs['cart_pk']}
+        return {}

@@ -1,7 +1,9 @@
+import uuid
 from decimal import Decimal
 
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 # django automatically creates an id as the primary key, if the primary key is
 # not specified.
@@ -131,13 +133,21 @@ class OrderItem(models.Model):
 
 class Cart(models.Model):
     # anonymous user can place cart
+    # the primary id is an integer, easy to hack
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.SmallIntegerField()
+    # quantity = models.SmallIntegerField()
+    quantity = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000), ]
+    )
+
+    class Meta:
+        unique_together = [['cart', 'product'], ]
 
 
 class Address(models.Model):
