@@ -88,6 +88,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'unit_price', 'inventory_status', 'collection_title', 'description')
     list_editable = ('unit_price', )
     list_per_page = 50
+
     # load related objects in the admin list page
     list_select_related = ('collection', )
     list_filter = ('collection', 'last_updated_at', InventoryFilter)
@@ -100,6 +101,7 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {
         'slug': ('name', ),
     }
+    # enable search for collection with the serach_fields defined in collection
     autocomplete_fields = ['collection']
 
     # inlines = [TagInline, ]
@@ -132,8 +134,17 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(models.Customer)
 class CustomerAdmin(admin.ModelAdmin):
+    # list_display = ('id', 'first_name', 'last_name', 'membership', 'placed_orders')
+    # user__first_name is not support for list_display
     list_display = ('id', 'first_name', 'last_name', 'membership', 'placed_orders')
-    ordering = ('first_name', 'last_name')
+    # if no fields defined for the name, it will find the method matching with the name
+    list_select_related = ['user']
+    # the same as select_related('user')
+    ordering = ('user__first_name', 'user__last_name')
+
+    # enable search for user with the searching fields defined in useradmin
+    autocomplete_fields = ('user', )
+
     list_editable = ('membership',)
     list_per_page = 10
     search_fields = ('first_name__istartswith', 'last_name__istartswith')
