@@ -121,6 +121,9 @@ class Customer(models.Model):
         #     models.Index(fields=('phone_number',))
         # ]
         ordering = ('user__first_name', 'user__last_name')
+        permissions = [
+            ('view_history', 'Can view history')
+        ]
 
     def __str__(self) -> str:
         return f'{self.user.last_name} {self.user.first_name}'

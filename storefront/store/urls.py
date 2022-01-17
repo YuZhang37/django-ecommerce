@@ -14,6 +14,7 @@ router = routers.DefaultRouter()
 router.register('collections', views.CollectionViewSet)
 router.register('products', views.ProductViewSet, basename='product')
 router.register('carts', views.CartViewSet, basename='cart')
+router.register('customers', views.CustomerViewSet, basename='customer')
 
 # register the child routers
 # lookup='product' means /products/product_pk/

@@ -4,26 +4,31 @@ from django.db.models.aggregates import Count
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView
 )
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, DjangoModelPermissions, \
+    DjangoModelPermissionsOrAnonReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
+from core.serializers import UserSerializer
 from store.filters import ProductFilter
-from store.models import Product, Collection, OrderItem, Review, Cart, CartItem
+from store.models import Product, Collection, OrderItem, Review, Cart, CartItem, Customer
 from store.paginations import ProductPageNumberPagination
+from store.permissions import IsAdminOrReadOnly, FullDjangoModelPermissions, ViewCustomerHistoryPermission
 from store.serializers import (
     ProductSerializer,
     CollectionSerializer,
     ProductSerializerForCreate,
-    ReviewSerializer, CartSerializer, CartItemSerializer, CartItemSerializerForCreate, CartItemSerializerForUpdate
+    ReviewSerializer, CartSerializer, CartItemSerializer, CartItemSerializerForCreate, CartItemSerializerForUpdate,
+    CustomerSerializer
 )
 
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, \
@@ -364,6 +369,8 @@ class CollectionViewSet(ModelViewSet):
     ).all()
     serializer_class = CollectionSerializer
 
+    permission_classes = [IsAdminOrReadOnly]
+
     # lookup_field = 'id'
     # lookup_url_kwarg = 'obj_id'
 
@@ -439,6 +446,11 @@ class ProductViewSet(ModelViewSet):
     def get_serializer_context(self):
         return {'request': self.request}
 
+    # only admin users can modify products
+    # anyone can retrieve a list of products
+    # IsAdminUserOrReadOnly
+    permission_classes = [IsAdminOrReadOnly]
+
     # DestroyAPIView has the delete method
     # ModelViewSet doesn't have delete method, it has destroy method
     def destroy(self, request: Request, *args, **kwargs) -> Response:
@@ -512,3 +524,49 @@ class CartItemViewSet(ListModelMixin,
         if self.request.method == 'POST':
             return {'cart_id': self.kwargs['cart_pk']}
         return {}
+
+
+# class CustomerViewSet(CreateModelMixin,
+#                       RetrieveModelMixin,
+#                       UpdateModelMixin,
+#                       GenericViewSet):
+class CustomerViewSet(ModelViewSet):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
+
+    # permission_classes provide a list of permission classes
+    # permission_classes = [IsAuthenticated,]
+
+    # get permissions return a list of objects
+    # def get_permissions(self):
+    #     if self.request.method == 'GET':
+    #         return [AllowAny()]
+    #     return [IsAuthenticated()]
+
+    # only adminuser can list, create and destroy customers
+    permission_classes = [IsAdminUser]
+    # user is authenticated and has relevant model permissions
+    # to perform operations on that model
+    # permission_classes = [FullDjangoModelPermissions]
+
+    # Anonymous users will have read access to data
+    # permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
+
+    # get customer at customers/me/
+    # put to create customer or update customer
+    # authenticated users can create or update the associated customers
+    @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        (customer, created) = Customer.objects.get_or_create(user_id=request.user.id)
+        if request.method == 'GET':
+            serializer = CustomerSerializer(customer)
+            return Response(serializer.data)
+        elif request.method == 'PUT':
+            serializer = CustomerSerializer(customer, request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+    @action(detail=True, permission_classes=[ViewCustomerHistoryPermission])
+    def history(self, request, pk):
+        return Response('ok')

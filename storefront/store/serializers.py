@@ -1,9 +1,11 @@
 from decimal import Decimal
 
 from django.shortcuts import get_object_or_404
+from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
-from store.models import Product, Collection, Review, Cart, CartItem
+from core.models import User
+from store.models import Product, Collection, Review, Cart, CartItem, Customer
 
 
 class CollectionSerializer(serializers.ModelSerializer):
@@ -286,3 +288,23 @@ class CartItemSerializerForUpdate(serializers.ModelSerializer):
         fields = ['quantity']
         # fields = ['id', 'product', 'quantity']
         # read_only_fields = ['id', 'product']
+
+
+class UserSerializerForCustomer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    # user = UserSerializerForCustomer
+    user_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Customer
+        fields = ['id', 'user_id', 'phone_number', 'birthday', 'membership']
+        # the user_id is created dynamically at runtime, we need to explicitly
+        # define it if we want to see it at the post box
+        # we don't technically need the id field here. Later, we'll set that only
+        # authenticated users can call this endpoint. The client will send a token
+        # to the server. On the server, we can extract the user id from the token.
