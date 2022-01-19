@@ -20,7 +20,7 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from core.serializers import UserSerializer
 from store.filters import ProductFilter
-from store.models import Product, Collection, OrderItem, Review, Cart, CartItem, Customer
+from store.models import Product, Collection, OrderItem, Review, Cart, CartItem, Customer, Order
 from store.paginations import ProductPageNumberPagination
 from store.permissions import IsAdminOrReadOnly, FullDjangoModelPermissions, ViewCustomerHistoryPermission
 from store.serializers import (
@@ -28,7 +28,7 @@ from store.serializers import (
     CollectionSerializer,
     ProductSerializerForCreate,
     ReviewSerializer, CartSerializer, CartItemSerializer, CartItemSerializerForCreate, CartItemSerializerForUpdate,
-    CustomerSerializer
+    CustomerSerializer, OrderSerializer, OrderSerializerForCreate, OrderSerializerForUpdate
 )
 
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, \
@@ -90,7 +90,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 #     products = Product.objects.select_related('collection').all()
 #     # products = Product.objects.all()
 #     # serializer = ProductSerializer(products, many=True)
-#     # provide context with request for hyperlinked relation
+#     # provide with request for hyperlinked relation
 #     serializer = ProductSerializer(
 #         products, many=True, context={'request': request}
 #     )
@@ -545,6 +545,7 @@ class CustomerViewSet(ModelViewSet):
 
     # only adminuser can list, create and destroy customers
     permission_classes = [IsAdminUser]
+
     # user is authenticated and has relevant model permissions
     # to perform operations on that model
     # permission_classes = [FullDjangoModelPermissions]
@@ -557,7 +558,7 @@ class CustomerViewSet(ModelViewSet):
     # authenticated users can create or update the associated customers
     @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsAuthenticated])
     def me(self, request):
-        (customer, created) = Customer.objects.get_or_create(user_id=request.user.id)
+        customer = Customer.objects.get(user_id=request.user.id)
         if request.method == 'GET':
             serializer = CustomerSerializer(customer)
             return Response(serializer.data)
@@ -570,3 +571,90 @@ class CustomerViewSet(ModelViewSet):
     @action(detail=True, permission_classes=[ViewCustomerHistoryPermission])
     def history(self, request, pk):
         return Response('ok')
+
+
+class OrderViewSet(ListModelMixin,
+                   CreateModelMixin,
+                   RetrieveModelMixin,
+                   UpdateModelMixin,
+                   DestroyModelMixin,
+                   GenericViewSet):
+
+    # serializer_class = OrderSerializer
+
+    # only used for create
+    # def get_serializer_context(self):
+    #     return {'user_id': self.request.user.id}
+
+    # the return result should be the order created not the cart_id
+    # overwrite the default create method
+    def create(self, request, *args, **kwargs):
+        serializer = OrderSerializerForCreate(
+            data=request.data,
+            context={'user_id': self.request.user.id}
+        )
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        # why the returned data has no items inside
+        # problem solved
+        # the previous cart successfully created the order and delete the cart
+        # the second time pass the cart_id, it creates an order with no items.
+        return Response(
+            data=OrderSerializer(order).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    def update(self, request, *args, **kwargs):
+        super().update(request, *args, **kwargs)
+        instance = self.get_object()
+        serializer = OrderSerializer(instance)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_200_OK
+        )
+
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            if self.request.method == 'GET':
+                return Order.objects.all().prefetch_related('orderitem_set__product')
+            return Order.objects.all()
+
+        # violates the command query separation
+        # we can embed a logic to create a customer when a user is registered
+        # in the save() of UserSerializer
+        # (customer_id, created) \
+        #     = Customer.objects.only('id').get_or_create(user_id=user.id)
+
+        # implemented in signals to make sure
+        # that customer always exists for each user
+        customer_id = Customer.objects.only('id').get(user_id=user.id)
+
+        if self.request.method == 'GET':
+            return Order.objects.all() \
+                .prefetch_related('orderitem_set__product') \
+                .filter(customer_id=customer_id)
+        return Order.objects.all().filter(customer_id=customer_id)
+
+    # not supports PUT method
+    http_method_names = ['get', 'patch', 'post', 'delete', 'head', 'options']
+
+    # permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        # if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+        if self.request.method in ['PATCH', 'DELETE']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return OrderSerializerForCreate
+        elif self.request.method == 'PATCH':
+            return OrderSerializerForUpdate
+        return OrderSerializer
+
+    # def get_serializer_context(self):
+    #     serializer = Cart.objects.get(id=self.request.query_params['cart_id'])
+    #     return {'cart': serializer}

@@ -17,7 +17,8 @@ class Collection(models.Model):
         'Product',
         on_delete=models.SET_NULL,
         null=True,
-        # tell django not to create the reverse relationship
+        blank=True,
+        # tell django not to create the reverse relationship '+'
         related_query_name='featured_collection',
     )
 

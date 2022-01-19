@@ -136,7 +136,7 @@ class ProductAdmin(admin.ModelAdmin):
 class CustomerAdmin(admin.ModelAdmin):
     # list_display = ('id', 'first_name', 'last_name', 'membership', 'placed_orders')
     # user__first_name is not support for list_display
-    list_display = ('id', 'first_name', 'last_name', 'membership', 'placed_orders')
+    list_display = ('id', 'user', 'first_name', 'last_name', 'membership', 'placed_orders')
     # if no fields defined for the name, it will find the method matching with the name
     list_select_related = ['user']
     # the same as select_related('user')

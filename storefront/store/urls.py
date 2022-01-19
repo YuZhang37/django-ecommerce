@@ -11,11 +11,12 @@ from store import views, serializers
 router = routers.DefaultRouter()
 
 # register parent routers
+# basename is used to generate url names, <basename>-list, <basename>-detail
 router.register('collections', views.CollectionViewSet)
 router.register('products', views.ProductViewSet, basename='product')
 router.register('carts', views.CartViewSet, basename='cart')
 router.register('customers', views.CustomerViewSet, basename='customer')
-
+router.register('orders', views.OrderViewSet, basename='order')
 # register the child routers
 # lookup='product' means /products/product_pk/
 # basename is used as the prefix to generate the names of the URL patterns

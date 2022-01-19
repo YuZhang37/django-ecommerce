@@ -4,6 +4,15 @@ from rest_framework import serializers
 
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
+
+    # we can embed a logic to create a customer when a user is registered
+    # not a good idea to include dependency on Customer from a different app
+    # def save(self, **kwargs):
+    #     user = super().save(**kwargs)
+    #     Customer.objects.create(user=user)
+    #     return user
+
+
     # class Meta:
     #     model = User
     #     fields = tuple(User.REQUIRED_FIELDS) + (

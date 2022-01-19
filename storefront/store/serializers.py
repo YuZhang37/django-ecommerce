@@ -1,11 +1,13 @@
 from decimal import Decimal
 
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
 from core.models import User
-from store.models import Product, Collection, Review, Cart, CartItem, Customer
+from store.models import Product, Collection, Review, Cart, CartItem, Customer, Order, OrderItem
+from store.signals import order_created
 
 
 class CollectionSerializer(serializers.ModelSerializer):
@@ -14,7 +16,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         # id: automatically read-only
         fields = ['id', 'title', 'product_count', 'featured_product']
         read_only_fields = []
-        extra_kwargs = {'featured_product': {'required': False}}
+        extra_kwargs = {'featured_product': {'required': False,}}
 
     # read_only=True, this field is not for creating and updating
     product_count = serializers.IntegerField(read_only=True)
@@ -213,7 +215,6 @@ class CartItemSerializer(serializers.ModelSerializer):
     def calculate_total_price(self, item: CartItem):
         return item.product.unit_price * item.quantity
 
-
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True, source='cartitem_set')
     id = serializers.UUIDField(read_only=True)
@@ -241,31 +242,32 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializerForCreate(serializers.ModelSerializer):
-    # product_id = serializers.IntegerField()
-    # class Meta:
-    #     model = CartItem
-    #     fields = ['id', 'quantity', 'product_id']
+    product_id = serializers.IntegerField()
 
-    # def validate_product_id(self, value):
-    #     raise the Validation Error or return the validated value
-    #     if not Product.objects.filter(pk=value).exists():
-    #         raise serializers.ValidationError(
-    #             "No product with the given id was found."
-    #         )
-    #     return value
-    #
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'quantity', ]
+        fields = ['id', 'product_id', 'quantity', ]
+
+    def validate_product_id(self, value):
+        # raise the Validation Error or return the validated value
+        if not Product.objects.filter(pk=value).exists():
+            raise serializers.ValidationError(
+                "No product with the given id was found."
+            )
+        return value
+
+    # class Meta:
+    #     model = CartItem
+    #     fields = ['id', 'product', 'quantity', ]
 
     def save(self, **kwargs):
         cart_id = self.context['cart_id']
-        product = self.validated_data['product']
+        product_id = self.validated_data['product_id']
         # primary key related field returns an object
         quantity = self.validated_data['quantity']
 
         try:
-            cart_item = CartItem.objects.get(cart=cart_id, product=product)
+            cart_item = CartItem.objects.get(cart=cart_id, product=product_id)
             cart_item.quantity += quantity
             cart_item.save()
             # https://docs.djangoproject.com/en/4.0/ref/models/instances/#django.db.models.Model.save
@@ -308,3 +310,110 @@ class CustomerSerializer(serializers.ModelSerializer):
         # we don't technically need the id field here. Later, we'll set that only
         # authenticated users can call this endpoint. The client will send a token
         # to the server. On the server, we can extract the user id from the token.
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product', 'unit_price', 'quantity',
+                  # 'total_price',
+                  ]
+
+    product = ProductSerializerForItem()
+    # total_price = serializers.SerializerMethodField(
+    #     method_name='calculate_total_price'
+    # )
+
+    # def calculate_total_price(self, item: OrderItem):
+    #     return item.product.unit_price * item.quantity
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True, source='orderitem_set')
+
+    class Meta:
+        model = Order
+        fields = ['id', 'customer', 'placed_at', 'payment_status', 'items']
+
+
+class OrderSerializerForUpdate(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['payment_status']
+
+
+class OrderSerializerForCreate(serializers.Serializer):
+    cart_id = serializers.UUIDField()
+
+    def validate_cart_id(self, cart_id):
+        if not Cart.objects.filter(id=cart_id).exists():
+            raise serializers.ValidationError(
+                "No cart with the given id was found."
+            )
+        if not CartItem.objects.filter(cart_id=cart_id).exists():
+            raise serializers.ValidationError(
+                "The cart is empty."
+            )
+        return cart_id
+
+    def save(self, **kwargs):
+        with transaction.atomic():
+            customer = Customer.objects.get(
+                user_id=self.context['user_id']
+            )
+            # even the cart doesn't exist or has zero items
+            # we're still creating an order.
+            # NOT RIGHT, we need to validate the cart_id
+            order = Order.objects.create(customer=customer)
+            cart_id = self.validated_data['cart_id']
+            cart_items = CartItem.objects\
+                .filter(cart_id=cart_id).select_related('product')
+            order_items = []
+            for item in cart_items:
+                order_item = OrderItem(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    unit_price=item.product.unit_price,
+                )
+                order_items.append(order_item)
+            OrderItem.objects.bulk_create(order_items)
+            Cart.objects.filter(id=cart_id).delete()
+            # return the saved object
+
+            # sender: the class sending the signal
+            # when calling a handler we need to supply a sender argument
+            order_created.send_robust(self.__class__, order=order)
+            # send, if one of the receivers fails and throws an exception,
+            # the other receivers are not notified
+            return order
+
+
+# print(self.validated_data['cart_id'])
+        # print(self.context['user_id'])
+        #
+        # customer, created = Customer.objects.get_or_create(
+        #     user_id=self.context['user_id']
+        # )
+        # print(1)
+        # order = Order.objects.create(customer=customer)
+        # print(2)
+        # cart_id = self.validated_data['cart_id']
+        # print(3)
+        # cart_items = CartItem.objects\
+        #     .filter(cart_id=cart_id).select_related('product')
+        # print(4)
+        # order_items = []
+        # for item in cart_items:
+        #     order_item = OrderItem(
+        #         order=order,
+        #         product=item.product,
+        #         quantity=item.quantity,
+        #         unit_price=item.product.unit_price,
+        #     )
+        #     order_items.append(order_item)
+        # print(5)
+        # OrderItem.objects.bulk_create(order_items)
+
+
+
