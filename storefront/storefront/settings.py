@@ -223,3 +223,23 @@ DJOSER = {
         'current_user': 'core.serializers.UserSerializer',
     }
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = '10.0.2.2'
+EMAIL_PORT = 2525
+
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+# the fake server doesn't have a user and password, leave it empty
+# password saved here is unsafe, should use environment variable in production
+DEFAULT_FROM_EMAIL = 'from@shopping.com'
+# set site admins for send_admins,
+# a list of tuples, each tuple (name, email)
+ADMINS = [
+    ('admin1', 'admin1@shopping.com'),
+    ('admin2', 'admin2@shopping.com'),
+]
+# for smtp4dev,
+# admin interface: host machine port 3000 -> docker port 80
+# server: host machine port 2525 -> docker port 25
+

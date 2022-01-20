@@ -1,8 +1,12 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+from django.core import mail
+from django.core.mail import BadHeaderError
 from django.db.models.functions import Concat
 from django.http import HttpResponse
 from django.shortcuts import render
+from templated_mail.mail import BaseEmailMessage
+
 from store.models import Product, OrderItem, Order, Customer
 from tags.models import Tag, TaggedItem
 from django.db.models import (
@@ -28,6 +32,54 @@ def calculate():
     x = 1
     y = 2
     return x + y
+
+
+def say_hello3(request):
+    try:
+
+
+        # mail.send_mail('subject1', 'message1', 'tom@shopping.com',
+        #                ['tom1@shopping.com', 'tom2@shopping.com'])
+        # mail.mail_admins('subject_admin', 'message_admin',
+        #                  html_message='message_admin_html')
+        # mail clients supporting html will show html content,
+        # otherwise text content is displayed
+
+
+
+        # the above two functions rely on EmailMessage,
+        # to attach files in emails, we can use EmailMessage
+        # message = mail.EmailMessage('subject', 'message', 'from@shopping.com',
+        #                             ['tom1@shopping.com', 'tom2@shopping.com'])
+        # # path relative to the project directory
+        # message.attach_file('playground/static/playground/images/view.jpg')
+        # message.send()
+
+        # templates directory behaves just like static directory
+        # template_name will be searched in all templates directory for a match
+        message = BaseEmailMessage(
+            template_name='playground/emails/hello.html',
+            # context is used to pass data to templates
+            context={'name': 'Admin'}
+        )
+        message.send(['user1@shopping.com', 'user2@shopping.com'])
+
+    except mail.BadHeaderError:
+        pass
+
+    return render(
+        request,
+        'hello.html',
+        {
+            'name': 'Marvin',
+            # 'customers': list(query_set),
+            # 'orders': list(query_set)
+            # 'result': result,
+            # 'tags': list(query_set),
+            # 'query_set': list(query_set)
+
+        }
+    )
 
 
 # def say_hello(request):
@@ -365,3 +417,4 @@ def say_hello2(request):
 
         }
     )
+
