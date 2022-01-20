@@ -6,7 +6,7 @@ from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
 from core.models import User
-from store.models import Product, Collection, Review, Cart, CartItem, Customer, Order, OrderItem
+from store.models import Product, Collection, Review, Cart, CartItem, Customer, Order, OrderItem, ProductImage
 from store.signals import order_created
 
 
@@ -85,7 +85,29 @@ class ProductSerializerForCreate(serializers.ModelSerializer):
         return instance
 
 
+
+# object.image contains two things: (I think)
+# the url from database and image in the file system
+# when deserialize from posting, it converts to a box to select image
+# when serializing, it will only return the url from database
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'image']
+
+    def create(self, validated_data):
+        product_id = self.context.get('product_id')
+        return ProductImage.objects.create(
+            product_id=product_id, **validated_data
+        )
+
+
+
+
 class ProductSerializer(serializers.ModelSerializer):
+    images = ProductImageSerializer(
+        many=True, read_only=True, source='productimage_set'
+    )
     class Meta:
         model = Product
         fields = ['id',
@@ -93,7 +115,10 @@ class ProductSerializer(serializers.ModelSerializer):
                   'price',
                   'price_with_tax',
                   'price_with_tax2',
-                  'collection', ]
+                  'collection',
+                  'images',
+                  # 'productimage_set', it works
+                  ]
 
     title = serializers.CharField(max_length=255, source='name')
     price = serializers.DecimalField(
@@ -356,6 +381,9 @@ class OrderSerializerForCreate(serializers.Serializer):
             )
         return cart_id
 
+    # the default save method calls create and update
+    # here we don't need to update, only supports creating
+    # so we just overwrite save(), it's the same as overwriting create()
     def save(self, **kwargs):
         with transaction.atomic():
             customer = Customer.objects.get(
@@ -414,6 +442,5 @@ class OrderSerializerForCreate(serializers.Serializer):
         #     order_items.append(order_item)
         # print(5)
         # OrderItem.objects.bulk_create(order_items)
-
 
 

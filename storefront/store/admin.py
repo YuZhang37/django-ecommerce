@@ -14,6 +14,7 @@ from store import models
 # and decouple the dependencies between tags and stores apps
 # so that both apps are independent reusable apps
 # from tags.models import TaggedItem
+from store.models import ProductImage
 
 
 @admin.register(models.Collection)
@@ -76,6 +77,25 @@ class InventoryFilter(admin.SimpleListFilter):
 #     autocomplete_fields = ['tag']
 #     extra = 0
 
+class ProductImageInline(admin.TabularInline):
+    # this class also serves as a serializer
+    model = ProductImage
+    extra = 0
+    # thumbnail of the images
+    readonly_fields = ['thumbnail']
+
+    # in admin fields can be callable with one argument of the model instance
+    def thumbnail(self, instance: ProductImage):
+        # image exists
+        # convert the instance to a html image
+        if instance.image.name != '':
+            image_url = f'<img src="{instance.image.url}" class="thumbnail"/>'
+            # set the css class to thumbnail for styling
+            # the admin page doesn't know need for CSS files
+            # we need to go to the product admin class and import the CSS file
+            image_html = format_html(image_url)
+            return image_html
+        return ''
 
 @admin.register(models.Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -105,6 +125,16 @@ class ProductAdmin(admin.ModelAdmin):
     autocomplete_fields = ['collection']
 
     # inlines = [TagInline, ]
+    inlines = [ProductImageInline]
+
+    # specify the static assets that should be loaded on the product admin page
+    class Media:
+        css = {
+            # screen: styles for screen showing,
+            # print: styles on printing
+            # all: these styles applied everywhere
+            'all': ['store/styles.css', ]
+        }
 
     def collection_title(self, product):
         return product.collection.title
@@ -130,6 +160,9 @@ class ProductAdmin(admin.ModelAdmin):
     # have done for customizing list pages
     # forms for adding or updating models,
     # which is generated based on the definition of the models
+
+
+
 
 
 @admin.register(models.Customer)

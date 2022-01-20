@@ -28,6 +28,11 @@ products_router.register(
     basename='product-review'
 )
 
+products_router.register(
+    'images', views.ProductImageViewSet,
+    basename='product-image'
+)
+
 carts_router = routers.NestedDefaultRouter(
     router, 'carts', lookup='cart',
 )
@@ -44,6 +49,7 @@ urlpatterns = [
     path('', include(carts_router.urls)),
 ]
 
+# print(repr(serializers.ProductSerializer()))
 # print(repr(serializers.ReviewSerializer()))
 # print()
 # pprint(router.urls)

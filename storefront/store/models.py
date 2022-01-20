@@ -3,12 +3,13 @@ from decimal import Decimal
 
 from django.contrib import admin
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
 from django.conf import settings
 
 # django automatically creates an id as the primary key, if the primary key is
 # not specified.
 from core.models import User
+from store.validators import validate_file_size
 
 
 class Collection(models.Model):
@@ -68,6 +69,24 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['name']
+
+
+# product and image: one to many
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    # default: store images in the file system, and the path in the database
+    image = models.ImageField(
+        upload_to='store/images',
+        validators=[validate_file_size],
+    )
+    # image = models.FileField(
+    #     upload_to='store/images',
+    #     validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
+    # )
+    # we need to install pillow for image validation,
+    # pillow is an image processing library for Python
+    # validating file size? No built-in implementation,
+    # need to create it from scratch
 
 
 class Customer(models.Model):

@@ -20,7 +20,7 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from core.serializers import UserSerializer
 from store.filters import ProductFilter
-from store.models import Product, Collection, OrderItem, Review, Cart, CartItem, Customer, Order
+from store.models import Product, Collection, OrderItem, Review, Cart, CartItem, Customer, Order, ProductImage
 from store.paginations import ProductPageNumberPagination
 from store.permissions import IsAdminOrReadOnly, FullDjangoModelPermissions, ViewCustomerHistoryPermission
 from store.serializers import (
@@ -28,7 +28,7 @@ from store.serializers import (
     CollectionSerializer,
     ProductSerializerForCreate,
     ReviewSerializer, CartSerializer, CartItemSerializer, CartItemSerializerForCreate, CartItemSerializerForUpdate,
-    CustomerSerializer, OrderSerializer, OrderSerializerForCreate, OrderSerializerForUpdate
+    CustomerSerializer, OrderSerializer, OrderSerializerForCreate, OrderSerializerForUpdate, ProductImageSerializer
 )
 
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, \
@@ -430,7 +430,9 @@ class ProductViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = Product.objects.all()
         if self.request.method == 'GET':
-            queryset = Product.objects.select_related('collection').all()
+            queryset = Product.objects\
+                .select_related('collection')\
+                .prefetch_related('productimage_set')
             # this queryset can support query by query string in the request
             # collection_id = self.request.query_params.get('collection_id')
             # # dict, using get method, if no key, return None
@@ -658,3 +660,15 @@ class OrderViewSet(ListModelMixin,
     # def get_serializer_context(self):
     #     serializer = Cart.objects.get(id=self.request.query_params['cart_id'])
     #     return {'cart': serializer}
+
+
+# https://docs.djangoproject.com/en/4.0/topics/http/urls/
+class ProductImageViewSet(ModelViewSet):
+    serializer_class = ProductImageSerializer
+
+    def get_queryset(self):
+        product_id = self.kwargs['product_pk']
+        return ProductImage.objects.filter(product_id=product_id)
+
+    def get_serializer_context(self):
+        return {'product_id': self.kwargs['product_pk']}

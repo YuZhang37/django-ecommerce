@@ -17,7 +17,7 @@ class TagInline(GenericTabularInline):
 
 
 class CustomProductAdmin(ProductAdmin):
-    inlines = [TagInline]
+    inlines = [TagInline] + ProductAdmin.inlines
 
 
 admin.site.unregister(Product)

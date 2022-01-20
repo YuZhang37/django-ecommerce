@@ -14,6 +14,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 # import debug_toolbar
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 import debug_toolbar
@@ -29,3 +31,15 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
 ]
+
+# define a route for serving media files
+# any request goes to this endpoint
+# will route to the defined directory in the file system
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# this strategy only uses for development.
+# For production, use a different strategy
+
+# in development, DEBUG = True, in production, DEBUG = False
+# static, static files routing, others are api routing.

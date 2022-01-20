@@ -13,8 +13,9 @@ from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+import os
 
-
+# the current project home directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     # the name of the library is not the same as the name of the app
     'rest_framework',
     'djoser',
+    'corsheaders',
 
     'playground',
     'store',
@@ -56,7 +58,8 @@ INSTALLED_APPS = [
 # to the next middleware or return a response, each middleware can take the request
 # and add something to it.
 MIDDLEWARE = [
-
+    # the order matters
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -89,8 +92,26 @@ TEMPLATES = [
     },
 ]
 
-ALLOWED_HOSTS = ['127.0.0.1', '192.168.56.11', 'localhost', '0.0.0.0']
+# when ALLOWED_HOSTS is empty, the project serve hosts against default values
+# when specified, only serve the allowed hosts
+# just simply match the host in the request against the list
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '0.0.0.0',
+]
 
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8001',
+    'http://127.0.0.1:8001',
+]
+
+# https://www.fomfus.com/articles/how-to-use-ip-ranges-for-django-s-internal_ips-setting/
+# INTERNAL_IPS is a Django setting that works as a "security" filter,
+# allowing Django to know whether it is OK (or not) to disclose sensitive
+# information within its requests and Debug information output.
+# It is also used by other modules, most notably Django Debug Toolbar to know
+# if it is OK to show up.
 INTERNAL_IPS = [
     # ...
     "10.0.2.2",
@@ -112,6 +133,7 @@ WSGI_APPLICATION = 'storefront.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': 'storefront',
         'NAME': 'storefront',
         'HOST': '0.0.0.0',
         'PORT': '3306',
@@ -153,8 +175,15 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
+# these are the files that are bundled with our applications
 
 STATIC_URL = '/static/'
+
+# media refers to user uploaded files
+# the endpoint to expose the media files
+MEDIA_URL = '/media/'
+# where the media files are stored in the file system
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
@@ -194,4 +223,3 @@ DJOSER = {
         'current_user': 'core.serializers.UserSerializer',
     }
 }
-
