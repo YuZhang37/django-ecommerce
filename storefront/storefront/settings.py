@@ -16,6 +16,8 @@ from pathlib import Path
 import os
 
 # the current project home directory
+from celery.schedules import crontab
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
@@ -242,4 +244,31 @@ ADMINS = [
 # for smtp4dev,
 # admin interface: host machine port 3000 -> docker port 80
 # server: host machine port 2525 -> docker port 25
+
+
+# for celery configurations
+
+# setting the broker for the application and celery
+# this setting means app -> redis -> celery
+# intuitively only set redis -> celery, but actually also set app -> redis
+# these are the settings inserted by celery
+# to instruct the flow of messages from application to redis
+# we can think message broker is part of celery system
+# we just separate redis to running in docker, it should be a
+# required running process for celery system.
+CELERY_BROKER_URL = 'redis://10.0.2.2:6379/1'
+
+CELERY_BEAT_SCHEDULE = {
+    'notify_customers': {
+        'task': 'playground.tasks.notify_customers',
+        # every Monday 7:30
+        # 'schedule': crontab(day_of_week=1, hour=7, minute=30)
+        # every 15 minutes
+        # 'schedule': crontab(minute='*/15')
+        'schedule': 5,
+        'args': ['Hello world'],
+        'kwargs': {},
+
+    }
+}
 

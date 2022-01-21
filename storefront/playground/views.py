@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from templated_mail.mail import BaseEmailMessage
 
+from playground.tasks import notify_customers
 from store.models import Product, OrderItem, Order, Customer
 from tags.models import Tag, TaggedItem
 from django.db.models import (
@@ -32,6 +33,24 @@ def calculate():
     x = 1
     y = 2
     return x + y
+
+
+def say_hello4(request):
+    # not calling the function directly but with delay then the arguments
+    notify_customers.delay('HELLO')
+    return render(
+        request,
+        'hello.html',
+        {
+            'name': 'Marvin',
+            # 'customers': list(query_set),
+            # 'orders': list(query_set)
+            # 'result': result,
+            # 'tags': list(query_set),
+            # 'query_set': list(query_set)
+
+        }
+    )
 
 
 def say_hello3(request):
