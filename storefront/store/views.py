@@ -362,7 +362,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 # views inside a single class
 # ModelViewSet: combines List, Create, Retrieve, Update, Destroy APIView
 
-
 class CollectionViewSet(ModelViewSet):
     queryset = Collection.objects.annotate(
         product_count=Count('product')
