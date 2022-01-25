@@ -240,6 +240,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     def calculate_total_price(self, item: CartItem):
         return item.product.unit_price * item.quantity
 
+
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True, source='cartitem_set')
     id = serializers.UUIDField(read_only=True)

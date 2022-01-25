@@ -15,11 +15,11 @@ values
 insert into
     store_product (
     id,
-    title,
+    name,
     description,
     unit_price,
     inventory,
-    last_update,
+    last_updated_at,
     collection_id,
     slug
 )

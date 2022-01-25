@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'corsheaders',
+    'silk',
 
     'playground',
     'store',
@@ -73,8 +74,16 @@ MIDDLEWARE = [
     # the anonymous user class or an actual user object.
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+
+
 ]
+
+# if DEBUG:
+#     # the silk middleware not adding something to the incoming request,
+#     # it processes the incoming request
+#     MIDDLEWARE += ['silk.middleware.SilkyMiddleware', ]
 
 ROOT_URLCONF = 'storefront.urls'
 

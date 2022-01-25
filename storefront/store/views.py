@@ -402,6 +402,7 @@ class ProductViewSet(ModelViewSet):
     # what fields we want to use for filtering in the url+query string
 
     # filterset_fields = ['collection_id']
+    # for DjangoFilterBackend
     filterset_class = ProductFilter
 
     # SerachFilter is another filter backend
@@ -428,6 +429,7 @@ class ProductViewSet(ModelViewSet):
 
     def get_queryset(self):
         queryset = Product.objects.all()
+
         if self.request.method == 'GET':
             queryset = Product.objects\
                 .select_related('collection')\

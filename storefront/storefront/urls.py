@@ -37,6 +37,7 @@ urlpatterns = [
 # will route to the defined directory in the file system
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]
 
 # this strategy only uses for development.
 # For production, use a different strategy
