@@ -1,10 +1,15 @@
+import requests
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core import mail
+from django.core.cache import cache
 from django.core.mail import BadHeaderError
 from django.db.models.functions import Concat
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from rest_framework.views import APIView
 from templated_mail.mail import BaseEmailMessage
 
 from playground.tasks import notify_customers
@@ -33,6 +38,43 @@ def calculate():
     x = 1
     y = 2
     return x + y
+
+
+class Hello7View(APIView):
+    @method_decorator(cache_page(5 * 60))
+    def get(self, request):
+        response = requests.get('https://httpbin.org/delay/2')
+        data = response.json()
+        return render(request, 'hello.html', {'name': 'Marvin', })
+
+
+# cache for function based view
+@cache_page(5 * 60)
+def say_hello6(request):
+    response = requests.get('https://httpbin.org/delay/2')
+    data = response.json()
+    return render(request, 'hello.html', {'name': data, })
+
+
+# simulate a slow API endpoint
+def say_hello5(request):
+    # cache
+    key = 'http_bin'
+    if cache.get(key) is None:
+        response = requests.get('https://httpbin.org/delay/2')
+        data = response.json()
+        cache.set(key, data, 10 * 60)
+
+    return render(request, 'hello.html', {'name': cache.get(key), })
+
+
+    # built into python,
+    # using this module we can send a http request to another service
+    # this endpoint weill wait two seconds to respond to use, which simulates
+    # a slow third party service
+    # requests.get('https://httpbin.org/delay/2')
+
+    # return render(request, 'hello.html', {'name': 'Marvin', })
 
 
 def say_hello4(request):

@@ -63,6 +63,13 @@ class WebUser(HttpUser):
             json={'product_id': product_id, 'quantity': 1}
         )
 
+    @task
+    def say_hello7(self):
+        self.client.get(
+            'playground/hello7/',
+            name='hello7',
+        )
+
     def on_start(self):
         # different packages define different response objects
         # that returns from the client request

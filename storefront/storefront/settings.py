@@ -281,3 +281,18 @@ CELERY_BEAT_SCHEDULE = {
     }
 }
 
+# config redis as the caching backend
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        # the location of the redis server
+        # database 1 has been used as message broker, use 2 as cache
+        "LOCATION": 'redis://10.0.2.2:6379/2',
+        # the data in cache will be time out in 10 mins
+        'TIMEOUT': 10 * 60,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
