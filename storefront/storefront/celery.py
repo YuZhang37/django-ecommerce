@@ -5,7 +5,7 @@ import os
 import django
 from celery import Celery
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'storefront.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'storefront.settings.dev')
 app = Celery('storefront')
 
 # go to the django.conf module and load the settings object

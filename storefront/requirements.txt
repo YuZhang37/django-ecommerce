@@ -46,6 +46,7 @@ gevent==21.12.0
 geventhttpclient==1.5.3
 gprof2dot==2021.2.21
 greenlet==1.1.2
+gunicorn==20.1.0
 httplib2==0.9.2
 humanize==3.13.1
 hyperlink==17.3.1
@@ -120,6 +121,7 @@ vine==5.0.0
 watchdog==2.1.6
 wcwidth==0.2.5
 Werkzeug==2.0.2
+whitenoise==5.3.0
 wrapt==1.13.3
 zipp==3.6.0
 zope.event==4.5.0

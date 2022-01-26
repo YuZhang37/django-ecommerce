@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -29,6 +31,7 @@ from django.db.models import (
 from django.db import transaction
 from django.db import connection
 
+
 # Q is short for query, used to represent a query expression
 # for querying expressions, objects.all().filter has no difference with
 # objects.filter because of the lazy operation nature
@@ -38,6 +41,25 @@ def calculate():
     x = 1
     y = 2
     return x + y
+
+
+# __name__ gets the name of the current module,
+# it will translate to playground.views
+# set the name of the logger or bucket for writing log messages to
+logger = logging.getLogger(__name__)
+
+
+class Hello8View(APIView):
+
+    def get(self, request):
+        try:
+            logger.info('Calling httpbin')
+            response = requests.get('https://httpbin.org/delay/2')
+            logger.info('Received the response')
+            data = response.json()
+        except requests.ConnectionError:
+            logger.critical('httpbin is offline')
+        return render(request, 'hello.html', {'name': 'Marvin', })
 
 
 class Hello7View(APIView):
@@ -66,7 +88,6 @@ def say_hello5(request):
         cache.set(key, data, 10 * 60)
 
     return render(request, 'hello.html', {'name': cache.get(key), })
-
 
     # built into python,
     # using this module we can send a http request to another service
@@ -98,15 +119,12 @@ def say_hello4(request):
 def say_hello3(request):
     try:
 
-
         # mail.send_mail('subject1', 'message1', 'tom@shopping.com',
         #                ['tom1@shopping.com', 'tom2@shopping.com'])
         # mail.mail_admins('subject_admin', 'message_admin',
         #                  html_message='message_admin_html')
         # mail clients supporting html will show html content,
         # otherwise text content is displayed
-
-
 
         # the above two functions rely on EmailMessage,
         # to attach files in emails, we can use EmailMessage
@@ -478,4 +496,3 @@ def say_hello2(request):
 
         }
     )
-

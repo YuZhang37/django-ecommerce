@@ -11,5 +11,6 @@ urlpatterns = [
     path('hello5/', views.say_hello5),
     path('hello6/', views.say_hello6),
     path('hello7/', views.Hello7View.as_view()),
+    path('hello8/', views.Hello8View.as_view()),
 
 ]

@@ -64,6 +64,9 @@ MIDDLEWARE = [
     # the order matters
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
+    # whitenoise middleware should be as high as possible
+    # but should come after the security middleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -189,11 +192,13 @@ USE_TZ = True
 # these are the files that are bundled with our applications
 
 STATIC_URL = '/static/'
-
+# Django knows where our static assets are located on disk
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # media refers to user uploaded files
 # the endpoint to expose the media files
 MEDIA_URL = '/media/'
 # where the media files are stored in the file system
+# the full path to a folder on disk that contains user uploaded files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
@@ -296,3 +301,70 @@ CACHES = {
     }
 }
 
+
+# configurations for logging <logger objects>
+LOGGING = {
+    'version': 1,
+    # as a best practice, we should always set this to be False,
+    # There are other loggers that come with Django or other libraries we use,
+    # we don't want to disable them,
+    # we want to capture everything that comes with tem.
+    'disable_existing_loggers': False,
+    # what to do with log messages, write to the console or write to a file
+    # <handlers only define handlers, logger will actually set them>
+    # < all things here are for configuring logger objects>
+    'handlers': {
+        # writing messages to the console
+        'console': {
+            'class': 'logging.StreamHandler'
+        },
+        # writing messages to file
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'general.log',
+            'formatter': 'verbose',
+        }
+    },
+
+    # configurate the logger objects we create in the logic codes
+    'loggers': {
+        # capture any log messages from this app
+        # <configure the loggers from playground app>
+        # 'playground': {}
+        # capture only messages from a module
+        # <configure the loggers from playground views module>
+        # 'playground.view': {}
+        # capture all messages from all apps
+
+        # <configure the loggers for all apps>
+        '': {
+            # after capturing the messages, write them both to console and files
+            'handlers': ['console', 'file'],
+            # When we define a logger, we need to specify a level,
+            # this logger will only capture log messages at this level or higher.
+            # the level of log messages: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+            # 'level': 'ERROR',
+            # get the log level from environment variables,
+            # and supply a default value
+            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+
+    },
+
+    # define how log messages should be formatted
+    'formatters': {
+        # 'simple': {},
+        'verbose': {
+            # the format of our log messages,
+            # these log messages have different attributes
+            # https://docs.python.org/3/library/logging.html#
+            'format': '{asctime} ({levelname}) - {name} - {message}',
+            # setting style to '{' will translate {} to string.format()
+            # the strings listed above will be passed to string.format()
+            # $: will use string.Template class
+            'style': '{'
+        },
+    }
+}
+# 2022-01-25 23:36:23,339 (INFO) - django.utils.autoreload - Watching for file changes with StatReloader
+# django comes with a few built-in loggers
