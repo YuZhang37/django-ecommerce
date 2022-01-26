@@ -4,13 +4,13 @@ echo 'Start!'
 
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.6 2
 
-cd /vagrant
+cd /ecommerce
 
 sudo apt-get update
 sudo apt-get install tree
 
 # 安装配置mysql8
-if ! [ -e /vagrant/mysql-apt-config_0.8.15-1_all.deb ]; then
+if ! [ -e /ecommerce/mysql-apt-config_0.8.15-1_all.deb ]; then
 	wget -c https://dev.mysql.com/get/mysql-apt-config_0.8.15-1_all.deb
 fi
 

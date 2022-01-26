@@ -2,6 +2,7 @@
 .vagrant
 Vagrantfile
 
+
 #mac_file
 .DS_Store
 
@@ -139,7 +140,7 @@ dmypy.json
 .pyre/
 
 # collected static files
-storefront/static/
+/static/
 
 # media files
-storefront/media/
+/media/
