@@ -218,12 +218,7 @@ DJOSER = {
     }
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = '10.0.2.2'
-EMAIL_PORT = 2525
 
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
 # the fake server doesn't have a user and password, leave it empty
 # password saved here is unsafe, should use environment variable in production
 DEFAULT_FROM_EMAIL = 'from@shopping.com'
@@ -248,7 +243,7 @@ ADMINS = [
 # we can think message broker is part of celery system
 # we just separate redis to running in docker, it should be a
 # required running process for celery system.
-CELERY_BROKER_URL = 'redis://10.0.2.2:6379/1'
+# CELERY_BROKER_URL = 'redis://10.0.2.2:6379/1'
 
 CELERY_BEAT_SCHEDULE = {
     'notify_customers': {
@@ -264,20 +259,20 @@ CELERY_BEAT_SCHEDULE = {
     }
 }
 
-# config redis as the caching backend
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        # the location of the redis server
-        # database 1 has been used as message broker, use 2 as cache
-        "LOCATION": 'redis://10.0.2.2:6379/2',
-        # the data in cache will be time out in 10 mins
-        'TIMEOUT': 10 * 60,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
-    }
-}
+# # config redis as the caching backend
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         # the location of the redis server
+#         # database 1 has been used as message broker, use 2 as cache
+#         "LOCATION": 'redis://10.0.2.2:6379/2',
+#         # the data in cache will be time out in 10 mins
+#         'TIMEOUT': 10 * 60,
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }
 
 
 # configurations for logging <logger objects>

@@ -27,3 +27,27 @@ DATABASES = {
     }
 }
 
+CELERY_BROKER_URL = 'redis://10.0.2.2:6379/1'
+
+# config redis as the caching backend
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        # the location of the redis server
+        # database 1 has been used as message broker, use 2 as cache
+        "LOCATION": 'redis://10.0.2.2:6379/2',
+        # the data in cache will be time out in 10 mins
+        'TIMEOUT': 10 * 60,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = '10.0.2.2'
+EMAIL_PORT = 2525
+
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+
