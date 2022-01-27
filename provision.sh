@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 echo 'Start!'
-
+# not install python, just use the default python3 to cover python
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.6 2
 
 cd /ecommerce

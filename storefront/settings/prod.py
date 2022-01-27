@@ -11,7 +11,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 # if debug is false, must set up ALLOWED_HOSTS,
 # specify the servers that can run our application
-ALLOWED_HOSTS = ['marvinbuy-prod.herokuapp.com']
+ALLOWED_HOSTS = ['yubuy-prod.herokuapp.com']
 
 
 DATABASES = {

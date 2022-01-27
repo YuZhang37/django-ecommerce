@@ -144,3 +144,6 @@ dmypy.json
 
 # media files
 /media/
+
+# for deployment
+/deployment/
